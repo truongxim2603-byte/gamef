@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vòng quay chữ cái g - y (16:9)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #3b82f6; }
+        .game-frame { width: 90vw; max-width: 960px; aspect-ratio: 16 / 9; background: white; border-radius: 2rem; padding: 2rem; box-shadow: 0 20px 25px rgba(0,0,0,0.3); border: 8px solid #fde047; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+    <div class="game-frame" id="game-container">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center">
+            <h1 class="text-6xl font-black text-blue-600 mb-8">🐚 Vòng quay g - y 🦀</h1>
+            <button onclick="startGame()" class="bg-yellow-400 hover:bg-yellow-500 text-white text-4xl font-bold px-12 py-6 rounded-3xl shadow-lg transform transition active:scale-95">
+                BẮT ĐẦU CHƠI
+            </button>
+        </div>
+
+        <!-- Play Screen -->
+        <div id="play-screen" class="hidden w-full h-full flex flex-col justify-between">
+            <div class="flex justify-between text-blue-500 font-bold text-3xl">
+                <span>Điểm: <span id="score">0</span></span>
+                <span>Câu: <span id="q-num">1</span>/15</span>
+            </div>
+            
+            <div class="text-center flex-grow flex flex-col justify-center items-center">
+                <div id="img" class="text-9xl mb-4"></div>
+                <div id="word" class="text-8xl font-black text-blue-900"></div>
+            </div>
+
+            <div id="options" class="flex gap-8 justify-center">
+                <button onclick="checkAnswer('g')" class="bg-blue-600 text-white w-40 h-40 rounded-3xl text-6xl font-bold hover:bg-blue-700 active:scale-95 transition">G</button>
+                <button onclick="checkAnswer('y')" class="bg-pink-500 text-white w-40 h-40 rounded-3xl text-6xl font-bold hover:bg-pink-600 active:scale-95 transition">Y</button>
+            </div>
+            <div id="msg" class="text-3xl font-bold text-center h-16 pt-4"></div>
+        </div>
+    </div>
+
+    <script>
+        let score = 0, currentIdx = 0, audioCtx;
+        const words = [
+            {w: "GÀ", img: "🐔", t: "g"}, {w: "GẤU", img: "🐻", t: "g"}, {w: "GHẾ", img: "🪑", t: "g"},
+            {w: "GẠO", img: "🍚", t: "g"}, {w: "GIẾNG", img: "🕳️", t: "g"}, {w: "Y TÁ", img: "👩‍⚕️", t: "y"},
+            {w: "YẾN", img: "🐦", t: "y"}, {w: "CÂY", img: "🌳", t: "y"}, {w: "DÂY", img: "➰", t: "y"},
+            {w: "MÁY BAY", img: "✈️", t: "y"}, {w: "YẾM", img: "🧣", t: "y"}, {w: "GÁY", img: "📣", t: "g"},
+            {w: "GIÂY", img: "⏱️", t: "g"}, {w: "GAY", img: "🌈", t: "g"}, {w: "Y GẦY", img: "🧍", t: "y"}
+        ].sort(() => Math.random() - 0.5);
+
+        // Khởi tạo Audio khi người dùng nhấn nút bắt đầu
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playSound(freq) {
+            if (!audioCtx) return;
+            audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function startGame() {
+            initAudio();
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('play-screen').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentIdx >= words.length) {
+                document.getElementById('play-screen').innerHTML = `<h2 class="text-5xl font-bold text-blue-600">Hoàn thành! <br> Tổng điểm: ${score}</h2><button onclick="location.reload()" class="mt-8 bg-blue-500 text-white px-12 py-6 rounded-full text-3xl">Chơi lại</button>`;
+                return;
+            }
+            const q = words[currentIdx];
+            document.getElementById('img').innerText = q.img;
+            document.getElementById('word').innerText = q.w;
+            document.getElementById('q-num').innerText = (currentIdx + 1) + "/" + words.length;
+            document.getElementById('msg').innerText = "";
+        }
+
+        function checkAnswer(ans) {
+            const q = words[currentIdx];
+            const msg = document.getElementById('msg');
+            if (ans === q.t) {
+                playSound(600); // Âm cao = Đúng
+                score++;
+                document.getElementById('score').innerText = score;
+                msg.innerText = "Chính xác! ✨";
+                msg.style.color = "green";
+                setTimeout(() => {
+                    currentIdx++;
+                    loadQuestion();
+                }, 1000);
+            } else {
+                playSound(200); // Âm thấp = Sai
+                msg.innerText = "Thử lại nhé! 🎈";
+                msg.style.color = "red";
+            }
+        }
+    </script>
+</body>
+</html>
